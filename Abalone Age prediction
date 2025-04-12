@@ -1,0 +1,87 @@
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv('/content/abalone.csv')
+df.head()
+
+df.shape
+
+df.isnull().sum()
+
+from sklearn.preprocessing import LabelEncoder
+lr=LabelEncoder()
+df['Sex']=lr.fit_transform(df['Sex'])
+
+df.head()
+
+from sklearn.model_selection import train_test_split
+
+x=df.drop('Rings',axis=1)
+y =df['Rings']
+x_train,x_test,y_train,y_test= train_test_split(x,y,test_size=0.2,random_state=42)
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler()
+x_train=scaler.fit_transform(x_train)
+x_test=scaler.transform(x_test)
+
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+models= [
+    ('lrm',LinearRegression()),
+    ('ridge',Ridge()),
+    ('lasso',Lasso()),
+    ('dt',DecisionTreeRegressor()),
+    ('rf',RandomForestRegressor())
+]
+for name,model in models:
+  model.fit(x_train,y_train)
+  y_pred=model.predict(x_test)
+  mse=mean_squared_error(y_test,y_pred)
+  r=r2_score(y_test,y_pred)
+  print(name)
+  print('MSE:',mse)
+  print('R2 Score:',r2_score)
+
+
+dtrr=DecisionTreeRegressor()
+dtrr.fit(x_train,y_train)
+y_pred=dtrr.predict(x_test)
+mse=mean_squared_error(y_test,y_pred)
+r=r2_score(y_test,y_pred)
+print('MSE:',mse)
+print('R2 Score:',r)
+
+def prediction_age(Sex,Length,Diameter,Height,Whole_weght,shucked_weght,visc_wet,shell_weight):
+    features = np.array([[Sex,Length,Diameter,Height,Whole_weght,shucked_weght,visc_wet,shell_weight]])
+    
+    pred = dtrr.predict(features).reshape(1,-1)
+    
+    return pred[0]
+
+
+Sex = 2
+Length = 8.0
+Diameter = 4.0
+Height = 6.0
+Whole_weght = 10.0
+shucked_weght = 20.0
+visc_wet = 20.0
+shell_weight = 15.0
+
+
+prediciton = prediction_age(Sex,Length,Diameter,Height,Whole_weght,shucked_weght,visc_wet,shell_weight)
+
+if prediciton[0] == 0:
+    print("{} is a Male".format(prediciton))
+elif prediciton[0] == 1:
+    print("{} is a Female".format(prediciton))
+else:
+    print("{} is a Ifant".format(prediciton))
+
+import pickle
+pickle.dump(dtrr,open('model.pkl','wb'))
+
